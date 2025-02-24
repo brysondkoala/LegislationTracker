@@ -1,0 +1,1 @@
+WIP Project that uses the OLIS API to automatically create a spreadsheet with relevant information on legislation. Currently building out a use case where a spreadsheet is created listing information on all bills that have been sponsored by a legislator.
