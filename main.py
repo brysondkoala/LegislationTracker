@@ -1,5 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
+import pandas as pd
 
 # Find the LegislatoreCode of a Legislator using FirstName, LastName, SessionKey
 # FirstName, LastName, SessionKey
@@ -49,11 +50,10 @@ base_url = "https://api.oregonlegislature.gov/odata/odataservice.svc/MeasureSpon
 #Construct the filter query
 filter_query = f"SessionKey eq '{SessionKey}' and LegislatoreCode eq '{LegislatoreCode}'"
 
-#TODO: Add the select function to the query
 #Paramaters for the query
 params = {
     "$filter": filter_query,
-    "$expand": "Measure"
+    #"$select": "MeasurePrefix, MeasureNumber"
 }
 
 #Make the GET request
@@ -63,21 +63,30 @@ print(response.url)
 #Parse the XML Response
 root = ET.fromstring(response.content)
 
+#Create lists to append output to:
+measure_list = []
+sponsor_level_list = []
+
 # Find all entries in the XML response
 entries = root.findall(".//atom:entry", namespaces)
-
-#TODO: Find a way to make this stop double printing measures
 if entries:
     print(f"Bills introduced by {LegislatoreCode} in session {SessionKey}:")
     for entry in entries:
-        # Extract Measure details
+        # Get Measure #
         MeasurePrefix = entry.find(".//d:MeasurePrefix", namespaces).text
         MeasureNumber = entry.find(".//d:MeasureNumber", namespaces).text
-        print(f"- Measure Number: {MeasurePrefix}{MeasureNumber}")
+        measure = f"{MeasurePrefix}{MeasureNumber}"
+        measure_list.append(measure)
+
+        #Get Chief?
+        SponsorLevel = entry.find(".//d:SponsorLevel", namespaces).text
+        sponsor_level_list.append(SponsorLevel)
+        #print(f"- Measure Number: {MeasurePrefix}{MeasureNumber}")
     else:
         print(f"No bills found for {LegislatoreCode} in session {SessionKey}.")
 
-
-#Todo: Take the measures and start turning it into an actual product
+data = pd.DataFrame({'Measure': measure_list, 'Chief?': sponsor_level_list})
+print(data)
+data.to_csv('out.csv', index = False)
 
 
